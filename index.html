@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ANUMATI – Smart Gate Security</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --navy: #0a1628;
+    --navy2: #0f2040;
+    --blue: #1a3a6e;
+    --accent: #00c6ff;
+    --accent2: #0072ff;
+    --green: #00e676;
+    --red: #ff4444;
+    --orange: #ffaa00;
+    --white: #f0f4ff;
+    --muted: #7a8aaa;
+    --card: rgba(255,255,255,0.06);
+    --border: rgba(0,198,255,0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--navy); color: var(--white); font-family: 'Noto Sans', sans-serif; overflow: hidden; }
+
+  /* PHONE SHELL */
+  .phone-shell {
+    width: 390px; height: 844px; margin: 20px auto;
+    background: var(--navy);
+    border-radius: 44px;
+    border: 2px solid rgba(0,198,255,0.3);
+    box-shadow: 0 0 80px rgba(0,114,255,0.25), inset 0 0 30px rgba(0,0,0,0.4);
+    overflow: hidden; position: relative;
+    display: flex; flex-direction: column;
+  }
+
+  /* STATUS BAR */
+  .status-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 24px 4px; font-size: 12px; font-weight: 600;
+    background: rgba(0,0,0,0.3); flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; font-size: 11px; }
+
+  /* SCREEN CONTAINER */
+  .screens { flex: 1; position: relative; overflow: hidden; }
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(.4,0,.2,1);
+    overflow-y: auto;
+  }
+  .screen.active { transform: translateX(0); }
+  .screen.slide-left { transform: translateX(-100%); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    display: none; background: rgba(10,22,40,0.95);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 12px; flex-shrink: 0;
+  }
+  .bottom-nav.visible { display: flex; }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 3px; cursor: pointer; padding: 4px;
+    color: var(--muted); font-size: 10px; font-family: 'Noto Sans', sans-serif;
+    transition: color 0.2s;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item svg { width: 22px; height: 22px; }
+
+  /* ======================== SPLASH ======================== */
+  #splash {
+    background: linear-gradient(160deg, #0a1628 0%, #0f2040 50%, #0a1628 100%);
+    justify-content: center; align-items: center;
+  }
+  .splash-bg {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, rgba(0,114,255,0.18) 0%, transparent 70%);
+  }
+  .splash-content { text-align: center; z-index: 1; }
+  .splash-logo {
+    width: 90px; height: 90px; border-radius: 26px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 0 40px rgba(0,198,255,0.4);
+  }
+  .splash-logo svg { width: 52px; height: 52px; fill: white; }
+  .splash-title {
+    font-family: 'Rajdhani', sans-serif; font-size: 42px; font-weight: 700;
+    background: linear-gradient(90deg, var(--accent), #fff, var(--accent2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: 4px;
+  }
+  .splash-sub { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: 2px; }
+  .splash-tagline { color: var(--accent); font-size: 11px; margin-top: 4px; letter-spacing: 1px; }
+  .splash-loading {
+    margin-top: 48px; width: 160px; height: 3px;
+    background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;
+  }
+  .splash-bar {
+    height: 100%; width: 0; background: linear-gradient(90deg, var(--accent2), var(--accent));
+    border-radius: 2px; animation: loadBar 1.8s ease forwards 0.3s;
+  }
+  @keyframes loadBar { to { width: 100%; } }
+
+  /* ======================== WELCOME ======================== */
+  #welcome {
+    background: linear-gradient(160deg, #0a1628, #0f2040);
+    justify-content: center; align-items: center; padding: 24px;
+  }
+  .welcome-header { text-align: center; margin-bottom: 40px; }
+  .welcome-logo {
+    width: 70px; height: 70px; border-radius: 20px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    box-shadow: 0 0 30px rgba(0,198,255,0.3);
+  }
+  .welcome-logo svg { width: 40px; height: 40px; fill: white; }
+  .welcome-title {
+    font-family: 'Rajdhani', sans-serif; font-size: 32px; font-weight: 700;
+    letter-spacing: 3px;
+    background: linear-gradient(90deg, var(--accent), #fff);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .welcome-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .role-cards { display: flex; flex-direction: column; gap: 14px; width: 100%; }
+  .role-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; padding: 20px;
+    cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+  }
+  .role-card::before {
+    content: ''; position: absolute; inset: 0; opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .role-card.guard::before { background: linear-gradient(135deg, rgba(0,114,255,0.15), transparent); }
+  .role-card.delivery::before { background: linear-gradient(135deg, rgba(0,230,118,0.1), transparent); }
+  .role-card:hover::before, .role-card:active::before { opacity: 1; }
+  .role-card:active { transform: scale(0.97); }
+  .role-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 12px; font-size: 24px;
+  }
+  .guard .role-icon { background: rgba(0,114,255,0.2); }
+  .delivery .role-icon { background: rgba(0,230,118,0.15); }
+  .role-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .role-desc { color: var(--muted); font-size: 12px; line-height: 1.5; }
+  .role-arrow {
+    position: absolute; right: 20px; top: 50%;
+    transform: translateY(-50%); color: var(--muted); font-size: 20px;
+  }
+
+  /* ======================== REGISTER / LOGIN ======================== */
+  #register, #login {
+    background: linear-gradient(160deg, #0a1628, #0f2040);
+    padding: 0;
+  }
+  .screen-header {
+    padding: 16px 20px 12px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--accent); font-size: 16px;
+    flex-shrink: 0;
+  }
+  .screen-title { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 700; }
+  .screen-body { padding: 20px; flex: 1; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px; color: var(--white);
+    font-size: 14px; font-family: 'Noto Sans', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--muted); }
+  select.form-input option { background: var(--navy2); color: var(--white); }
+  .role-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    margin-bottom: 20px;
+  }
+  .role-badge.guard { background: rgba(0,114,255,0.2); color: #60aaff; border: 1px solid rgba(0,114,255,0.3); }
+  .role-badge.delivery { background: rgba(0,230,118,0.15); color: #00e676; border: 1px solid rgba(0,230,118,0.3); }
+  .btn-primary {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    color: white; font-size: 15px; font-weight: 700;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s; margin-top: 8px;
+  }
+  .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-secondary {
+    width: 100%; padding: 12px; border-radius: 14px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-size: 13px; font-family: 'Noto Sans', sans-serif;
+    cursor: pointer; margin-top: 10px; transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .divider { text-align: center; color: var(--muted); font-size: 12px; margin: 14px 0; }
+
+  /* ======================== GUARD DASHBOARD ======================== */
+  #guard-dash {
+    background: linear-gradient(160deg, #0a1628, #0f2040);
+    flex-direction: column;
+  }
+  .dash-header {
+    padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); flex-shrink: 0;
+  }
+  .dash-user { display: flex; align-items: center; gap: 10px; }
+  .dash-avatar {
+    width: 38px; height: 38px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 16px;
+  }
+  .dash-name { font-size: 14px; font-weight: 600; }
+  .dash-role { font-size: 11px; color: var(--muted); }
+  .dash-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .qr-section {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 16px;
+  }
+  .qr-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+  .qr-box {
+    background: white; border-radius: 14px; padding: 14px;
+    display: inline-block; margin-bottom: 12px;
+  }
+  .qr-hint { font-size: 11px; color: var(--muted); }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px 10px; text-align: center;
+  }
+  .stat-num { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; }
+  .stat-num.green { color: var(--green); }
+  .stat-num.orange { color: var(--orange); }
+  .stat-num.blue { color: var(--accent); }
+  .stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .section-label {
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+    color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 10px; margin-top: 4px;
+  }
+  .visitor-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .visitor-avatar {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .visitor-info { flex: 1; min-width: 0; }
+  .visitor-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .visitor-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .visitor-status {
+    font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+    flex-shrink: 0; letter-spacing: 0.5px;
+  }
+  .status-in { background: rgba(0,230,118,0.15); color: var(--green); }
+  .status-out { background: rgba(255,68,68,0.1); color: var(--red); }
+  .empty-state { text-align: center; padding: 30px 0; color: var(--muted); font-size: 13px; }
+  .empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+  /* ======================== GUARD QR DISPLAY ======================== */
+  #guard-qr {
+    background: linear-gradient(160deg, #0a1628, #0f2040);
+  }
+
+  /* ======================== DELIVERY DASH ======================== */
+  #delivery-dash {
+    background: linear-gradient(160deg, #0a1628, #0f2040);
+  }
+  .delivery-content { padding: 16px; flex: 1; overflow-y: auto; }
+  .checkin-card {
+    background: linear-gradient(135deg, rgba(0,114,255,0.15), rgba(0,198,255,0.08));
+    border: 1px solid rgba(0,198,255,0.3);
+    border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 16px;
+  }
+  .checkin-icon { font-size: 48px; margin-bottom: 8px; }
+  .checkin-title { font-family: 'Rajdhani', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .checkin-sub { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+  .btn-scan {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(90deg, #00e676, #00c853);
+    color: #001a0a; font-size: 15px; font-weight: 800;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-scan:active { transform: scale(0.97); }
+  .btn-checkout {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: linear-gradient(90deg, #ff4444, #ff6b6b);
+    color: white; font-size: 15px; font-weight: 800;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: 10px;
+  }
+  .btn-checkout:active { transform: scale(0.97); }
+  .current-visit {
+    background: rgba(0,230,118,0.08); border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px;
+  }
+  .visit-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .visit-key { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .visit-val { font-size: 13px; font-weight: 600; }
+  .timer-display {
+    font-family: 'Rajdhani', sans-serif; font-size: 36px; font-weight: 700;
+    color: var(--green); text-align: center; margin: 10px 0 4px;
+  }
+  .timer-label { text-align: center; font-size: 11px; color: var(--muted); }
+  .history-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .history-society { font-size: 13px; font-weight: 600; }
+  .history-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .history-duration { font-size: 12px; color: var(--accent); font-weight: 600; }
+
+  /* ======================== SCANNER MODAL ======================== */
+  #scanner-modal {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  #scanner-modal.visible { display: flex; }
+  .scanner-frame {
+    width: 220px; height: 220px; position: relative; margin-bottom: 24px;
+  }
+  .scanner-frame::before, .scanner-frame::after {
+    content: ''; position: absolute; width: 40px; height: 40px; border-color: var(--accent); border-style: solid;
+  }
+  .scanner-frame::before { top: 0; left: 0; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+  .scanner-frame::after { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+  .scanner-corner-tr, .scanner-corner-bl {
+    position: absolute; width: 40px; height: 40px; border-color: var(--accent); border-style: solid;
+  }
+  .scanner-corner-tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+  .scanner-corner-bl { bottom: 0; left: 0; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+  .scanner-line {
+    position: absolute; left: 10px; right: 10px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: scanLine 2s linear infinite; top: 10px;
+  }
+  @keyframes scanLine {
+    0% { top: 10px; } 100% { top: calc(100% - 10px); }
+  }
+  .scanner-instructions { color: var(--white); font-size: 14px; text-align: center; margin-bottom: 8px; }
+  .scanner-sub { color: var(--muted); font-size: 12px; text-align: center; margin-bottom: 20px; }
+  .scanner-demo-note {
+    background: rgba(0,198,255,0.1); border: 1px solid rgba(0,198,255,0.2);
+    border-radius: 10px; padding: 10px 14px; font-size: 11px; color: var(--accent);
+    text-align: center; margin-bottom: 16px; width: 100%;
+  }
+  .btn-cancel {
+    padding: 12px 32px; border-radius: 12px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--muted); font-size: 14px; cursor: pointer;
+    font-family: 'Noto Sans', sans-serif;
+  }
+
+  /* ======================== SUCCESS MODAL ======================== */
+  #success-modal {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  #success-modal.visible { display: flex; }
+  .success-icon {
+    width: 80px; height: 80px; border-radius: 24px;
+    background: linear-gradient(135deg, #00c853, #00e676);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; margin-bottom: 20px;
+    box-shadow: 0 0 40px rgba(0,230,118,0.4);
+    animation: popIn 0.4s cubic-bezier(.175,.885,.32,1.275);
+  }
+  @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+  .success-title { font-family: 'Rajdhani', sans-serif; font-size: 24px; font-weight: 700; margin-bottom: 8px; text-align: center; }
+  .success-msg { color: var(--muted); font-size: 13px; text-align: center; margin-bottom: 8px; }
+  .success-detail {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; width: 100%; margin-bottom: 20px; margin-top: 8px;
+  }
+  .success-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .success-row:last-child { margin-bottom: 0; }
+  .success-key { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .success-val { font-size: 13px; font-weight: 600; }
+
+  /* ======================== CHECKOUT MODAL ======================== */
+  #checkout-modal {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px;
+  }
+  #checkout-modal.visible { display: flex; }
+  .checkout-icon {
+    width: 80px; height: 80px; border-radius: 24px;
+    background: linear-gradient(135deg, #ff4444, #ff6b6b);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; margin-bottom: 20px;
+    box-shadow: 0 0 40px rgba(255,68,68,0.3);
+    animation: popIn 0.4s cubic-bezier(.175,.885,.32,1.275);
+  }
+
+  /* TOAST */
+  .toast {
+    position: absolute; bottom: 80px; left: 20px; right: 20px;
+    background: rgba(0,0,0,0.9); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 16px; font-size: 13px;
+    transform: translateY(20px); opacity: 0; transition: all 0.3s;
+    z-index: 200; text-align: center;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(0,230,118,0.4); color: var(--green); }
+  .toast.error { border-color: rgba(255,68,68,0.4); color: var(--red); }
+
+  /* PROFILE SCREEN */
+  #profile-screen {
+    background: linear-gradient(160deg, #0a1628, #0f2040);
+    padding: 0;
+  }
+  .profile-header {
+    padding: 30px 20px 20px; text-align: center;
+    background: linear-gradient(180deg, rgba(0,114,255,0.1), transparent);
+  }
+  .profile-avatar-lg {
+    width: 80px; height: 80px; border-radius: 24px;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 28px;
+    margin: 0 auto 12px;
+    box-shadow: 0 0 30px rgba(0,198,255,0.3);
+  }
+  .profile-name-lg { font-family: 'Rajdhani', sans-serif; font-size: 22px; font-weight: 700; }
+  .profile-body { padding: 16px; }
+  .profile-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; margin-bottom: 10px;
+  }
+  .profile-item-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+  .profile-item-label { font-size: 11px; color: var(--muted); }
+  .profile-item-val { font-size: 14px; font-weight: 600; }
+  .btn-logout {
+    width: 100%; padding: 14px; border-radius: 14px; border: none;
+    background: rgba(255,68,68,0.15); border: 1px solid rgba(255,68,68,0.3);
+    color: var(--red); font-size: 15px; font-weight: 700;
+    font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;
+    cursor: pointer; margin-top: 8px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 0; }
+
+  @media (max-height: 860px) {
+    .phone-shell { height: calc(100vh - 20px); margin: 10px auto; }
+  }
+  @media (max-width: 420px) {
+    .phone-shell { width: 100%; border-radius: 0; margin: 0; height: 100vh; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+  <div class="status-bar">
+    <span id="clock">9:41</span>
+    <div class="status-icons">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><rect x="0" y="4" width="3" height="6" rx="1"/><rect x="4" y="2" width="3" height="8" rx="1"/><rect x="8" y="0" width="3" height="10" rx="1"/><rect x="12" y="3" width="2" height="7" rx="1" opacity="0.3"/></svg>
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor"><path d="M7 2.5C5.2 2.5 3.6 3.2 2.4 4.3L1 2.9C2.6 1.4 4.7 0.5 7 0.5s4.4.9 6 2.4L11.6 4.3C10.4 3.2 8.8 2.5 7 2.5zM7 5.5c-.9 0-1.7.4-2.3.9L3.3 5C4.3 4.2 5.6 3.5 7 3.5s2.7.7 3.7 1.5L9.3 6.4C8.7 5.9 7.9 5.5 7 5.5zM7 8.5c-.5 0-1-.2-1.3-.5L7 6.5l1.3 1.5c-.3.3-.8.5-1.3.5z"/></svg>
+      <svg width="20" height="10" viewBox="0 0 20 10" fill="currentColor"><rect x="0" y="1" width="17" height="8" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="1.5" y="2.5" width="12" height="5" rx="1" fill="currentColor"/><rect x="17.5" y="3" width="2" height="4" rx="1"/></svg>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- SPLASH -->
+    <div class="screen active" id="splash">
+      <div class="splash-bg"></div>
+      <div class="splash-content">
+        <div class="splash-logo">
+          <svg viewBox="0 0 48 48"><path d="M24 4L6 14v10c0 11 7.7 21.3 18 24 10.3-2.7 18-13 18-24V14L24 4z"/></svg>
+        </div>
+        <div class="splash-title">ANUMATI</div>
+        <div class="splash-sub">SMART GATE SECURITY SYSTEM</div>
+        <div class="splash-tagline">अनुमति • Permission • Access</div>
+        <div class="splash-loading"><div class="splash-bar"></div></div>
+      </div>
+    </div>
+
+    <!-- WELCOME / ROLE SELECT -->
+    <div class="screen" id="welcome">
+      <div class="welcome-header">
+        <div class="welcome-logo">
+          <svg viewBox="0 0 48 48" fill="white"><path d="M24 4L6 14v10c0 11 7.7 21.3 18 24 10.3-2.7 18-13 18-24V14L24 4z"/></svg>
+        </div>
+        <div class="welcome-title">ANUMATI</div>
+        <div class="welcome-sub">Choose your role to get started</div>
+      </div>
+      <div class="role-cards">
+        <div class="role-card guard" onclick="selectRole('guard')">
+          <div class="role-icon">🛡️</div>
+          <div class="role-title">Security Guard</div>
+          <div class="role-desc">Manage entry & exit of visitors. Generate your Gate QR Code for check-in verification.</div>
+          <div class="role-arrow">›</div>
+        </div>
+        <div class="role-card delivery" onclick="selectRole('delivery')">
+          <div class="role-icon">📦</div>
+          <div class="role-title">Visitor / Delivery</div>
+          <div class="role-desc">Register with verified ID. Scan guard QR to check in and check out from premises.</div>
+          <div class="role-arrow">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="screen" id="register">
+      <div class="screen-header">
+        <div class="back-btn" onclick="goBack('welcome')">‹</div>
+        <div class="screen-title">Create Account</div>
+      </div>
+      <div class="screen-body">
+        <div id="reg-role-badge" class="role-badge guard">🛡️ Security Guard</div>
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" class="form-input" id="reg-name" placeholder="Enter your full name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" class="form-input" id="reg-phone" placeholder="+91 XXXXX XXXXX">
+        </div>
+        <div class="form-group" id="guard-fields">
+          <label class="form-label">Society / Building Name</label>
+          <input type="text" class="form-input" id="reg-society" placeholder="e.g. Sunshine Heights">
+        </div>
+        <div class="form-group" id="guard-fields2">
+          <label class="form-label">Gate Number</label>
+          <input type="text" class="form-input" id="reg-gate" placeholder="e.g. Main Gate, Gate 2">
+        </div>
+        <div class="form-group" id="delivery-fields" style="display:none">
+          <label class="form-label">Company / Employer</label>
+          <input type="text" class="form-input" id="reg-company" placeholder="e.g. Swiggy, Amazon, Self">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="reg-pass" placeholder="Create password">
+        </div>
+        <button class="btn-primary" onclick="doRegister()">CREATE ACCOUNT</button>
+        <div class="divider">Already have an account?</div>
+        <button class="btn-secondary" onclick="goToLogin()">Sign In</button>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="screen" id="login">
+      <div class="screen-header">
+        <div class="back-btn" onclick="goBack('register')">‹</div>
+        <div class="screen-title">Sign In</div>
+      </div>
+      <div class="screen-body">
+        <div id="login-role-badge" class="role-badge guard">🛡️ Security Guard</div>
+        <div class="form-group">
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" class="form-input" id="login-phone" placeholder="+91 XXXXX XXXXX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="login-pass" placeholder="Enter password">
+        </div>
+        <button class="btn-primary" onclick="doLogin()">SIGN IN</button>
+        <div class="divider">New user?</div>
+        <button class="btn-secondary" onclick="goBack('register')">Create Account</button>
+        <button class="btn-secondary" style="margin-top:6px;color:var(--accent);border-color:rgba(0,198,255,0.3)" onclick="demoLogin()">🎯 Try Demo Login</button>
+      </div>
+    </div>
+
+    <!-- GUARD DASHBOARD -->
+    <div class="screen" id="guard-dash">
+      <div class="dash-header">
+        <div class="dash-user">
+          <div class="dash-avatar" id="guard-av">RK</div>
+          <div>
+            <div class="dash-name" id="guard-name">Ravi Kumar</div>
+            <div class="dash-role">🛡️ Security Guard • <span id="guard-gate">Main Gate</span></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--accent);text-align:right">
+          <div id="guard-society-label" style="font-weight:600">Sunshine Heights</div>
+          <div id="live-time" style="color:var(--muted)">9:41 AM</div>
+        </div>
+      </div>
+      <div class="dash-content">
+        <!-- QR Code Section -->
+        <div class="qr-section">
+          <div class="qr-label">📱 My Gate QR Code</div>
+          <div class="qr-box" id="guard-qr-container"></div>
+          <div class="qr-hint">Delivery boys scan this to check in</div>
+        </div>
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num green" id="stat-in">0</div>
+            <div class="stat-label">Inside Now</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num orange" id="stat-today">0</div>
+            <div class="stat-label">Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num blue" id="stat-total">0</div>
+            <div class="stat-label">All Time</div>
+          </div>
+        </div>
+        <!-- Visitor List -->
+        <div class="section-label">Currently Inside</div>
+        <div id="guard-visitor-list">
+          <div class="empty-state">
+            <div class="empty-icon">🚪</div>
+            No visitors inside right now
+          </div>
+        </div>
+        <div class="section-label" style="margin-top:14px">Recent Entries</div>
+        <div id="guard-history-list">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            No entry records yet
+          </div>
+        </div>
+      </div>
+      <!-- Bottom Nav Guard -->
+      <div class="bottom-nav visible" id="guard-nav">
+        <div class="nav-item active" onclick="guardTab('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="guardTab('log')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+          <span>Log</span>
+        </div>
+        <div class="nav-item" onclick="guardTab('profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELIVERY DASHBOARD -->
+    <div class="screen" id="delivery-dash">
+      <div class="dash-header">
+        <div class="dash-user">
+          <div class="dash-avatar" style="background:linear-gradient(135deg,#00c853,#00e676);color:#001a0a" id="delivery-av">AP</div>
+          <div>
+            <div class="dash-name" id="delivery-name">Amit Patel</div>
+            <div class="dash-role">📦 <span id="delivery-company">Swiggy</span></div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-align:right">
+          <div id="delivery-live-time">9:41 AM</div>
+        </div>
+      </div>
+      <div class="delivery-content">
+        <!-- Checkin status -->
+        <div id="delivery-checkin-card" class="checkin-card">
+          <div class="checkin-icon">📱</div>
+          <div class="checkin-title">Scan to Check In</div>
+          <div class="checkin-sub">Scan the QR code at the security gate to enter the premises</div>
+          <button class="btn-scan" onclick="openScanner()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="3" height="3"/><rect x="14" y="7" width="3" height="3"/><rect x="7" y="14" width="3" height="3"/><rect x="14" y="14" width="3" height="3"/></svg>
+            SCAN GATE QR CODE
+          </button>
+        </div>
+        <!-- Active visit (shown when checked in) -->
+        <div id="delivery-active-visit" class="current-visit" style="display:none">
+          <div class="section-label" style="color:var(--green);margin-bottom:8px">✓ CHECKED IN</div>
+          <div class="visit-row">
+            <span class="visit-key">Society</span>
+            <span class="visit-val" id="active-society">—</span>
+          </div>
+          <div class="visit-row">
+            <span class="visit-key">Gate</span>
+            <span class="visit-val" id="active-gate">—</span>
+          </div>
+          <div class="visit-row">
+            <span class="visit-key">Entry Time</span>
+            <span class="visit-val" id="active-entry">—</span>
+          </div>
+          <div class="timer-display" id="timer-display">00:00:00</div>
+          <div class="timer-label">Time Inside Premises</div>
+          <button class="btn-checkout" onclick="doCheckout()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            CHECK OUT
+          </button>
+        </div>
+        <!-- History -->
+        <div class="section-label">Visit History</div>
+        <div id="delivery-history-list">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            No visits yet
+          </div>
+        </div>
+      </div>
+      <!-- Bottom Nav Delivery -->
+      <div class="bottom-nav visible" id="delivery-nav">
+        <div class="nav-item active" onclick="deliveryTab('home')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+          <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="deliveryTab('history')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>History</span>
+        </div>
+        <div class="nav-item" onclick="deliveryTab('profile')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE SCREEN (shared) -->
+    <div class="screen" id="profile-screen">
+      <div class="screen-header">
+        <div class="back-btn" id="profile-back-btn" onclick="goBackProfile()">‹</div>
+        <div class="screen-title">My Profile</div>
+      </div>
+      <div class="profile-header">
+        <div class="profile-avatar-lg" id="profile-av-lg">RK</div>
+        <div class="profile-name-lg" id="profile-name-lg">Ravi Kumar</div>
+        <div id="profile-role-badge" class="role-badge guard" style="margin:8px auto 0;display:inline-flex">🛡️ Security Guard</div>
+      </div>
+      <div class="profile-body">
+        <div class="profile-item">
+          <div class="profile-item-icon">📱</div>
+          <div><div class="profile-item-label">MOBILE</div><div class="profile-item-val" id="profile-phone">+91 98765 43210</div></div>
+        </div>
+        <div class="profile-item" id="profile-society-item">
+          <div class="profile-item-icon">🏢</div>
+          <div><div class="profile-item-label">SOCIETY</div><div class="profile-item-val" id="profile-society">Sunshine Heights</div></div>
+        </div>
+        <div class="profile-item" id="profile-extra-item">
+          <div class="profile-item-icon">🚪</div>
+          <div><div class="profile-item-label">GATE</div><div class="profile-item-val" id="profile-extra">Main Gate</div></div>
+        </div>
+        <div class="profile-item">
+          <div class="profile-item-icon">🆔</div>
+          <div><div class="profile-item-label">USER ID</div><div class="profile-item-val" id="profile-id">ANU-2024-001</div></div>
+        </div>
+        <button class="btn-logout" onclick="doLogout()">🚪 SIGN OUT</button>
+      </div>
+    </div>
+
+  </div><!-- end .screens -->
+
+  <!-- SCANNER MODAL -->
+  <div id="scanner-modal">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700">Scan Gate QR</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:4px">Point camera at security guard's QR code</div>
+    </div>
+    <div class="scanner-frame">
+      <div class="scanner-corner-tr"></div>
+      <div class="scanner-corner-bl"></div>
+      <div class="scanner-line"></div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0.08">
+        <svg width="100" height="100" viewBox="0 0 100 100" fill="white">
+          <rect x="10" y="10" width="30" height="30" rx="4"/><rect x="15" y="15" width="20" height="20" rx="2" fill="#0a1628"/>
+          <rect x="60" y="10" width="30" height="30" rx="4"/><rect x="65" y="15" width="20" height="20" rx="2" fill="#0a1628"/>
+          <rect x="10" y="60" width="30" height="30" rx="4"/><rect x="15" y="65" width="20" height="20" rx="2" fill="#0a1628"/>
+          <rect x="60" y="60" width="8" height="8"/><rect x="72" y="60" width="8" height="8"/><rect x="84" y="60" width="8" height="8"/>
+          <rect x="60" y="72" width="8" height="8"/><rect x="84" y="72" width="8" height="8"/>
+          <rect x="60" y="84" width="20" height="8"/><rect x="84" y="84" width="8" height="8"/>
+        </svg>
+      </div>
+    </div>
+    <div class="scanner-demo-note">
+      🎯 Demo Mode: Camera QR scanning simulated.<br>Tap "SIMULATE SCAN" to check in automatically.
+    </div>
+    <button class="btn-primary" style="width:220px;margin-bottom:10px" onclick="simulateScan()">SIMULATE SCAN</button>
+    <button class="btn-cancel" onclick="closeScanner()">Cancel</button>
+  </div>
+
+  <!-- SUCCESS MODAL (Check In) -->
+  <div id="success-modal">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Check In Successful!</div>
+    <div class="success-msg">You have been granted entry. Your visit is being tracked.</div>
+    <div class="success-detail">
+      <div class="success-row"><span class="success-key">Society</span><span class="success-val" id="suc-society">—</span></div>
+      <div class="success-row"><span class="success-key">Gate</span><span class="success-val" id="suc-gate">—</span></div>
+      <div class="success-row"><span class="success-key">Guard</span><span class="success-val" id="suc-guard">—</span></div>
+      <div class="success-row"><span class="success-key">Entry Time</span><span class="success-val" id="suc-time">—</span></div>
+      <div class="success-row"><span class="success-key">Entry ID</span><span class="success-val" id="suc-id">—</span></div>
+    </div>
+    <button class="btn-primary" style="width:220px" onclick="closeSuccessModal()">CONTINUE</button>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div id="checkout-modal">
+    <div class="checkout-icon">👋</div>
+    <div class="success-title">Checked Out!</div>
+    <div class="success-msg">Your visit has been recorded. Stay safe!</div>
+    <div class="success-detail">
+      <div class="success-row"><span class="success-key">Society</span><span class="success-val" id="co-society">—</span></div>
+      <div class="success-row"><span class="success-key">Duration</span><span class="success-val" id="co-duration">—</span></div>
+      <div class="success-row"><span class="success-key">Entry</span><span class="success-val" id="co-entry">—</span></div>
+      <div class="success-row"><span class="success-key">Exit</span><span class="success-val" id="co-exit">—</span></div>
+    </div>
+    <button class="btn-primary" style="width:220px" onclick="closeCheckoutModal()">DONE</button>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ===================== STATE =====================
+let currentRole = 'guard';
+let currentUser = null;
+let currentScreen = 'splash';
+let activeVisit = null; // delivery boy's active check-in
+let timerInterval = null;
+let timerStart = null;
+let qrGenerated = false;
+
+// In-memory DB
+const db = {
+  users: [
+    { id: 'ANU-G-001', role: 'guard', name: 'Ravi Kumar', phone: '9876543210', password: 'demo', society: 'Sunshine Heights', gate: 'Main Gate' },
+    { id: 'ANU-D-001', role: 'delivery', name: 'Amit Patel', phone: '9123456789', password: 'demo', company: 'Swiggy' }
+  ],
+  entries: [] // { id, visitorId, visitorName, guardId, guardName, society, gate, entryTime, exitTime, company }
+};
+
+// ===================== CLOCK =====================
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  const timeStr = `${h12}:${m.toString().padStart(2,'0')} ${ampm}`;
+  document.getElementById('clock').textContent = `${h12}:${m.toString().padStart(2,'0')}`;
+  const lt = document.getElementById('live-time');
+  const dlt = document.getElementById('delivery-live-time');
+  if (lt) lt.textContent = timeStr;
+  if (dlt) dlt.textContent = timeStr;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ===================== NAVIGATION =====================
+function showScreen(id, direction = 'right') {
+  const prev = document.querySelector('.screen.active');
+  const next = document.getElementById(id);
+  if (!next || prev === next) return;
+  if (prev) {
+    if (direction === 'right') prev.classList.add('slide-left');
+    prev.classList.remove('active');
+    setTimeout(() => prev.classList.remove('slide-left'), 350);
+  }
+  next.classList.remove('slide-left');
+  next.classList.add('active');
+  currentScreen = id;
+}
+
+function goBack(to) { showScreen(to, 'left'); }
+
+function goBackProfile() {
+  if (currentRole === 'guard') showScreen('guard-dash', 'left');
+  else showScreen('delivery-dash', 'left');
+}
+
+// ===================== SPLASH =====================
+setTimeout(() => {
+  showScreen('welcome');
+}, 2200);
+
+// ===================== ROLE SELECT =====================
+function selectRole(role) {
+  currentRole = role;
+  updateRegisterUI(role);
+  showScreen('register');
+}
+
+function updateRegisterUI(role) {
+  const badge = document.getElementById('reg-role-badge');
+  const gf = document.getElementById('guard-fields');
+  const gf2 = document.getElementById('guard-fields2');
+  const df = document.getElementById('delivery-fields');
+  if (role === 'guard') {
+    badge.className = 'role-badge guard';
+    badge.textContent = '🛡️ Security Guard';
+    gf.style.display = ''; gf2.style.display = ''; df.style.display = 'none';
+  } else {
+    badge.className = 'role-badge delivery';
+    badge.textContent = '📦 Visitor / Delivery';
+    gf.style.display = 'none'; gf2.style.display = 'none'; df.style.display = '';
+  }
+}
+
+function goToLogin() {
+  const lb = document.getElementById('login-role-badge');
+  if (currentRole === 'guard') { lb.className = 'role-badge guard'; lb.textContent = '🛡️ Security Guard'; }
+  else { lb.className = 'role-badge delivery'; lb.textContent = '📦 Visitor / Delivery'; }
+  showScreen('login');
+}
+
+// ===================== REGISTER =====================
+function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  if (!name || !phone || !pass) { showToast('Please fill all fields', 'error'); return; }
+  const id = 'ANU-' + (currentRole === 'guard' ? 'G' : 'D') + '-' + String(db.users.length + 1).padStart(3,'0');
+  const user = { id, role: currentRole, name, phone, password: pass };
+  if (currentRole === 'guard') {
+    user.society = document.getElementById('reg-society').value.trim() || 'My Society';
+    user.gate = document.getElementById('reg-gate').value.trim() || 'Main Gate';
+  } else {
+    user.company = document.getElementById('reg-company').value.trim() || 'Unknown';
+  }
+  db.users.push(user);
+  currentUser = user;
+  showToast('Account created! Welcome 🎉', 'success');
+  setTimeout(() => loadDashboard(), 800);
+}
+
+// ===================== LOGIN =====================
+function doLogin() {
+  const phone = document.getElementById('login-phone').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const user = db.users.find(u => u.phone === phone && u.password === pass && u.role === currentRole);
+  if (!user) { showToast('Invalid credentials', 'error'); return; }
+  currentUser = user;
+  loadDashboard();
+}
+
+function demoLogin() {
+  const user = db.users.find(u => u.role === currentRole);
+  currentUser = user;
+  loadDashboard();
+}
+
+// ===================== DASHBOARD LOADER =====================
+function loadDashboard() {
+  if (currentUser.role === 'guard') {
+    document.getElementById('guard-name').textContent = currentUser.name;
+    document.getElementById('guard-av').textContent = initials(currentUser.name);
+    document.getElementById('guard-gate').textContent = currentUser.gate;
+    document.getElementById('guard-society-label').textContent = currentUser.society;
+    generateGuardQR();
+    refreshGuardStats();
+    showScreen('guard-dash');
+  } else {
+    document.getElementById('delivery-name').textContent = currentUser.name;
+    document.getElementById('delivery-av').textContent = initials(currentUser.name);
+    document.getElementById('delivery-company').textContent = currentUser.company || 'Delivery';
+    refreshDeliveryHistory();
+    showScreen('delivery-dash');
+  }
+}
+
+function initials(name) {
+  return name.split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+}
+
+// ===================== QR CODE =====================
+function generateGuardQR() {
+  if (qrGenerated) return;
+  const container = document.getElementById('guard-qr-container');
+  container.innerHTML = '';
+  const qrData = JSON.stringify({
+    type: 'anumati_gate',
+    guardId: currentUser.id,
+    guardName: currentUser.name,
+    society: currentUser.society,
+    gate: currentUser.gate,
+    ts: Date.now()
+  });
+  try {
+    new QRCode(container, {
+      text: qrData,
+      width: 160, height: 160,
+      colorDark: '#000000', colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.H
+    });
+    qrGenerated = true;
+  } catch(e) {
+    container.innerHTML = '<div style="width:160px;height:160px;display:flex;align-items:center;justify-content:center;background:#eee;border-radius:8px;color:#333;font-size:12px;text-align:center;padding:10px">QR Code<br>' + (currentUser.society || '') + '<br>' + (currentUser.gate || '') + '</div>';
+  }
+}
+
+// ===================== SCANNER =====================
+function openScanner() {
+  if (activeVisit) { showToast('Already checked in!', 'error'); return; }
+  document.getElementById('scanner-modal').classList.add('visible');
+}
+
+function closeScanner() {
+  document.getElementById('scanner-modal').classList.remove('visible');
+}
+
+function simulateScan() {
+  // Pick a guard from DB
+  const guard = db.users.find(u => u.role === 'guard');
+  if (!guard) { showToast('No gate found', 'error'); return; }
+  closeScanner();
+  processCheckin(guard);
+}
+
+function processCheckin(guard) {
+  const now = new Date();
+  const entryId = 'ENT-' + Date.now().toString().slice(-6);
+  activeVisit = {
+    id: entryId,
+    visitorId: currentUser.id,
+    visitorName: currentUser.name,
+    company: currentUser.company,
+    guardId: guard.id,
+    guardName: guard.name,
+    society: guard.society,
+    gate: guard.gate,
+    entryTime: now,
+    exitTime: null
+  };
+  db.entries.push(activeVisit);
+
+  // Update delivery UI
+  document.getElementById('delivery-checkin-card').style.display = 'none';
+  document.getElementById('delivery-active-visit').style.display = 'block';
+  document.getElementById('active-society').textContent = guard.society;
+  document.getElementById('active-gate').textContent = guard.gate;
+  document.getElementById('active-entry').textContent = formatTime(now);
+
+  // Start timer
+  timerStart = now;
+  timerInterval = setInterval(updateTimer, 1000);
+
+  // Update guard stats
+  refreshGuardStats();
+
+  // Show success modal
+  document.getElementById('suc-society').textContent = guard.society;
+  document.getElementById('suc-gate').textContent = guard.gate;
+  document.getElementById('suc-guard').textContent = guard.name;
+  document.getElementById('suc-time').textContent = formatTime(now);
+  document.getElementById('suc-id').textContent = entryId;
+  document.getElementById('success-modal').classList.add('visible');
+}
+
+function closeSuccessModal() {
+  document.getElementById('success-modal').classList.remove('visible');
+}
+
+function updateTimer() {
+  if (!timerStart) return;
+  const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+  const h = Math.floor(elapsed / 3600);
+  const m = Math.floor((elapsed % 3600) / 60);
+  const s = elapsed % 60;
+  document.getElementById('timer-display').textContent =
+    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function doCheckout() {
+  if (!activeVisit) return;
+  clearInterval(timerInterval);
+  const now = new Date();
+  activeVisit.exitTime = now;
+  const duration = formatDuration(timerStart, now);
+
+  // Update checkout modal
+  document.getElementById('co-society').textContent = activeVisit.society;
+  document.getElementById('co-duration').textContent = duration;
+  document.getElementById('co-entry').textContent = formatTime(activeVisit.entryTime);
+  document.getElementById('co-exit').textContent = formatTime(now);
+  document.getElementById('checkout-modal').classList.add('visible');
+
+  // Reset UI
+  document.getElementById('delivery-active-visit').style.display = 'none';
+  document.getElementById('delivery-checkin-card').style.display = 'block';
+  document.getElementById('timer-display').textContent = '00:00:00';
+
+  // Add to history
+  refreshDeliveryHistory();
+  refreshGuardStats();
+
+  const visit = activeVisit;
+  activeVisit = null;
+  timerStart = null;
+}
+
+function closeCheckoutModal() {
+  document.getElementById('checkout-modal').classList.remove('visible');
+}
+
+// ===================== GUARD STATS =====================
+function refreshGuardStats() {
+  if (!currentUser || currentUser.role !== 'guard') return;
+  const guardEntries = db.entries.filter(e => e.guardId === currentUser.id);
+  const inside = guardEntries.filter(e => !e.exitTime);
+  const today = guardEntries.filter(e => {
+    const d = new Date(e.entryTime);
+    const n = new Date();
+    return d.toDateString() === n.toDateString();
+  });
+  document.getElementById('stat-in').textContent = inside.length;
+  document.getElementById('stat-today').textContent = today.length;
+  document.getElementById('stat-total').textContent = guardEntries.length;
+
+  // Currently inside list
+  const insideList = document.getElementById('guard-visitor-list');
+  if (inside.length === 0) {
+    insideList.innerHTML = '<div class="empty-state"><div class="empty-icon">🚪</div>No visitors inside right now</div>';
+  } else {
+    insideList.innerHTML = inside.map(e => `
+      <div class="visitor-card">
+        <div class="visitor-avatar" style="background:rgba(0,230,118,0.15)">${getEmoji(e.company)}</div>
+        <div class="visitor-info">
+          <div class="visitor-name">${e.visitorName}</div>
+          <div class="visitor-meta">${e.company || 'Visitor'} • In: ${formatTime(new Date(e.entryTime))}</div>
+        </div>
+        <div class="visitor-status status-in">INSIDE</div>
+      </div>`).join('');
+  }
+
+  // History
+  const histList = document.getElementById('guard-history-list');
+  const recent = [...guardEntries].reverse().slice(0, 8);
+  if (recent.length === 0) {
+    histList.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No entry records yet</div>';
+  } else {
+    histList.innerHTML = recent.map(e => `
+      <div class="visitor-card">
+        <div class="visitor-avatar" style="background:rgba(0,114,255,0.15)">${getEmoji(e.company)}</div>
+        <div class="visitor-info">
+          <div class="visitor-name">${e.visitorName}</div>
+          <div class="visitor-meta">${e.company || 'Visitor'} • ${formatTime(new Date(e.entryTime))}</div>
+        </div>
+        <div class="visitor-status ${e.exitTime ? 'status-out' : 'status-in'}">${e.exitTime ? 'OUT' : 'IN'}</div>
+      </div>`).join('');
+  }
+}
+
+// ===================== DELIVERY HISTORY =====================
+function refreshDeliveryHistory() {
+  if (!currentUser || currentUser.role !== 'delivery') return;
+  const myEntries = db.entries.filter(e => e.visitorId === currentUser.id && e.exitTime);
+  const list = document.getElementById('delivery-history-list');
+  if (myEntries.length === 0) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div>No visits yet</div>';
+    return;
+  }
+  list.innerHTML = [...myEntries].reverse().map(e => `
+    <div class="history-item">
+      <div>
+        <div class="history-society">${e.society}</div>
+        <div class="history-time">${e.gate} • ${formatTime(new Date(e.entryTime))}</div>
+      </div>
+      <div class="history-duration">${formatDuration(new Date(e.entryTime), new Date(e.exitTime))}</div>
+    </div>`).join('');
+}
+
+// ===================== TABS =====================
+function guardTab(tab) {
+  document.querySelectorAll('#guard-nav .nav-item').forEach((el, i) => {
+    el.classList.toggle('active', ['home','log','profile'][i] === tab);
+  });
+  if (tab === 'profile') { loadProfile(); showScreen('profile-screen'); }
+  else if (tab === 'home') { refreshGuardStats(); }
+}
+
+function deliveryTab(tab) {
+  document.querySelectorAll('#delivery-nav .nav-item').forEach((el, i) => {
+    el.classList.toggle('active', ['home','history','profile'][i] === tab);
+  });
+  if (tab === 'profile') { loadProfile(); showScreen('profile-screen'); }
+  else if (tab === 'history') { refreshDeliveryHistory(); }
+}
+
+function loadProfile() {
+  document.getElementById('profile-av-lg').textContent = initials(currentUser.name);
+  document.getElementById('profile-name-lg').textContent = currentUser.name;
+  document.getElementById('profile-phone').textContent = currentUser.phone;
+  document.getElementById('profile-id').textContent = currentUser.id;
+  const rb = document.getElementById('profile-role-badge');
+  const si = document.getElementById('profile-society-item');
+  const ei = document.getElementById('profile-extra-item');
+  if (currentUser.role === 'guard') {
+    rb.className = 'role-badge guard'; rb.textContent = '🛡️ Security Guard';
+    document.getElementById('profile-society').textContent = currentUser.society;
+    document.getElementById('profile-extra').textContent = currentUser.gate;
+    document.getElementById('profile-society-item').querySelector('.profile-item-label').textContent = 'SOCIETY';
+    document.getElementById('profile-extra-item').querySelector('.profile-item-label').textContent = 'GATE';
+    si.style.display = ''; ei.style.display = '';
+  } else {
+    rb.className = 'role-badge delivery'; rb.textContent = '📦 Visitor / Delivery';
+    document.getElementById('profile-society').textContent = currentUser.company;
+    document.getElementById('profile-society-item').querySelector('.profile-item-label').textContent = 'COMPANY';
+    si.style.display = ''; ei.style.display = 'none';
+  }
+}
+
+function doLogout() {
+  currentUser = null; qrGenerated = false; activeVisit = null;
+  clearInterval(timerInterval);
+  document.getElementById('guard-qr-container').innerHTML = '';
+  showScreen('welcome', 'left');
+}
+
+// ===================== UTILITIES =====================
+function formatTime(date) {
+  if (!(date instanceof Date)) date = new Date(date);
+  const h = date.getHours() % 12 || 12;
+  const m = String(date.getMinutes()).padStart(2,'0');
+  return `${h}:${m} ${date.getHours() >= 12 ? 'PM' : 'AM'}`;
+}
+
+function formatDuration(start, end) {
+  const s = Math.floor((new Date(end) - new Date(start)) / 1000);
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s/60) + 'm ' + (s%60) + 's';
+  return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+}
+
+function getEmoji(company) {
+  const map = { 'Swiggy': '🍔', 'Zomato': '🍕', 'Amazon': '📦', 'Flipkart': '📦', 'BigBasket': '🛒', 'Dunzo': '🛵' };
+  return map[company] || '🧑';
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
